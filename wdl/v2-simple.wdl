@@ -22,14 +22,8 @@ workflow metagenomic_analysis {
             krona_db = krona_db
     }
 
-    # 多样性分析任务
-    call diversity_analysis {
-        input:
-            kraken_report = kraken2_classification.kraken_report
-    }
-
-    # 差异丰度分析任务
-    call differential_abundance_analysis {
+    # 多样性分析和差异丰度分析任务
+    call diversity_and_differential_analysis {
         input:
             kraken_report = kraken2_classification.kraken_report
     }
@@ -38,9 +32,9 @@ workflow metagenomic_analysis {
     call report_generation {
         input:
             krona_plot = krona_visualization.krona_plot,
-            alpha_diversity = diversity_analysis.alpha_diversity,
-            beta_diversity = diversity_analysis.beta_diversity,
-            diff_abundance = differential_abundance_analysis.diff_abundance
+            alpha_diversity = diversity_and_differential_analysis.alpha_diversity,
+            beta_diversity = diversity_and_differential_analysis.beta_diversity,
+            diff_abundance = diversity_and_differential_analysis.diff_abundance
     }
 }
 
@@ -61,7 +55,7 @@ task kraken2_classification {
     }
 
     runtime {
-        docker: "kraken2_docker_image"
+        docker: "kraken2_docker_image"  # 使用kraken2的Docker镜像
     }
 }
 
@@ -81,46 +75,29 @@ task krona_visualization {
     }
 
     runtime {
-        docker: "krona_docker_image"
+        docker: "krona_docker_image"  # 使用Krona的Docker镜像
     }
 }
 
-# 多样性分析任务定义
-task diversity_analysis {
+# 多样性分析和差异丰度分析任务定义
+task diversity_and_differential_analysis {
     input {
         File kraken_report  # Kraken2生成的报告文件
     }
 
     command {
-        Rscript diversity_analysis.R ~{kraken_report}
+        Rscript /scripts/diversity_analysis.R ~{kraken_report}
+        Rscript /scripts/differential_abundance_analysis.R ~{kraken_report}
     }
 
     output {
         File alpha_diversity = "alpha_diversity.csv"
-        File beta_diversity = "beta_diversity.csv"
-    }
-
-    runtime {
-        docker: "r_docker_image"
-    }
-}
-
-# 差异丰度分析任务定义
-task differential_abundance_analysis {
-    input {
-        File kraken_report  # Kraken2生成的报告文件
-    }
-
-    command {
-        Rscript differential_abundance_analysis.R ~{kraken_report}
-    }
-
-    output {
+        File beta_diversity = "beta_diversity_plot.png"
         File diff_abundance = "diff_abundance.csv"
     }
 
     runtime {
-        docker: "r_docker_image"
+        docker: "r_combined_analysis_docker_image"  # 使用多样性和差异丰度分析的综合Docker镜像
     }
 }
 
@@ -134,7 +111,7 @@ task report_generation {
     }
 
     command {
-        Rscript generate_report.R ~{krona_plot} ~{alpha_diversity} ~{beta_diversity} ~{diff_abundance}
+        Rscript /scripts/generate_report.R ~{krona_plot} ~{alpha_diversity} ~{beta_diversity} ~{diff_abundance}
     }
 
     output {
@@ -142,6 +119,6 @@ task report_generation {
     }
 
     runtime {
-        docker: "r_docker_image"
+        docker: "r_combined_analysis_docker_image"  # 使用多样性和差异丰度分析的综合Docker镜像
     }
 }

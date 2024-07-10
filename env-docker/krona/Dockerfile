@@ -3,10 +3,10 @@
 FROM biocontainers/biocontainers:v1.2.0_cv2
 
 ################## METADATA ######################
-LABEL base_image="biocontainers:v1.0.0_cv5"
+LABEL base_image="biocontainers:v1.2.0_cv2"
 LABEL version="1"
 LABEL software="krona"
-LABEL software.version="2.7.1"
+LABEL software.version="2.8.1"
 LABEL about.summary="Krona Tools is a set of scripts to create Krona charts from several Bioinformatics tools as well as from text and XML files."
 LABEL about.home="https://github.com/marbl/Krona"
 LABEL about.documentation="https://github.com/marbl/Krona/wiki"
@@ -22,10 +22,10 @@ USER root
 
 RUN apt-get clean all && \
     apt-get update && \
-    apt-get install -y curl && \
-    conda install -c bioconda krona=2.7.1 && \
+    apt-get install -y apt-utils curl && \
+    conda config --set ssl_verify no && \
+    conda install -c bioconda krona=2.8.1 && \
     ktUpdateTaxonomy.sh && \
-    apt-get update && \
     apt-get clean all && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

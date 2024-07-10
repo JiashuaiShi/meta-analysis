@@ -4,7 +4,7 @@ services:
   combined_analysis:
     build:
       context: .
-      dockerfile: Dockerfile.Ranalysis
+      dockerfile: Dockerfile
     image: r_combined_analysis
     container_name: r_analysis_container
     command: Rscript
